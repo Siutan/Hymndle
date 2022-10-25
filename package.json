@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "simple-svelte-autocomplete": "^2.5.0"
+  }
+}
