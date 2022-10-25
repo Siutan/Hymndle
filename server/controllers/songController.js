@@ -1,8 +1,8 @@
 import songService from "../services/songService.js";
 
-async function songList(req, res) {
+async function songLyrics(req, res) {
     try {
-        const songList = await songService.getAuth();
+        const songList = await songService.getLyrics(req.body.artist, req.body.song);
         res.send(songList);
     } catch (error) {
         res.status(500).send(error);
@@ -10,5 +10,5 @@ async function songList(req, res) {
 }
 
 export default {
-    songList
+    songLyrics
 }

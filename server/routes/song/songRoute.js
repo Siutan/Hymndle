@@ -4,7 +4,7 @@ const router = express.Router();
 import songController from "../../controllers/songController.js";
 
 // get live by name
-router.get('/', (songController.songList));
+router.post('/lyrics', (songController.songLyrics));
 
 
 // default export
