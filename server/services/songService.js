@@ -20,6 +20,13 @@ const getLyrics = async (artist, song) => {
     }
 
     // DO YOUR LYRICS STUFF HERE
+    const lyricsResponse = await fetch(songData.url);
+    const lyricsResData = await lyricsResponse.text();
+    console.log(lyricsResData);
+    if (lyricsResData.includes('<div id="lyrics-root-pin-spacer">')) {
+        const lyrics = lyricsResData.substring(lyricsResData.indexOf('<div id="lyrics-root-pin-spacer">')).replace(/<br[^>]*>/g, '\n')
+        songData.lyrics = decode(lyrics.substring(0, lyrics.indexOf('<button'))).replaceAll(/<[/]?[^>]*>/g, '');
+    }
 
     return songData;
 }

@@ -2,7 +2,7 @@
 <script lang="ts">
     export let data;
 
-    import {List, Badge, Modal, Portal, Card } from "stwui";
+    import {List, Badge, Button, Card, Modal, Portal } from "stwui";
     import {tooltip} from 'stwui/actions';
     import Autocomplete from "simple-svelte-autocomplete"
     import Artists from "$lib/components/Artists.svelte";
@@ -31,8 +31,6 @@
         open = false;
     }
 
-    // remove later
-    selected = [...selected, data.tracks[0]];
 
     const removeSelection = (track) => {
         // check if anythign is selected
@@ -51,8 +49,6 @@
         // if yes, reset selected to empty array
         if (track.id === masterTrack.id) {
             openModal();
-            selected = [];
-            filteredOptions = options;
         }
 
     }
@@ -62,15 +58,21 @@
         return months[parseInt(month) - 1]
     }
 
+    const stripName = (name) => {
+        // remove all text in brackets
+        // remove all text that is not alphanumeric
+        return name.replace(/\(.*?\)/g, '').replace(/[^a-zA-Z0-9 ]/g, "")
+    }
+
     // compare selected tracks to master track
     const compareSong = (type: string) => {
         const selectedTrack = selected[selected.length - 1]
         switch (type) {
             case 'name':
                 if (selectedTrack.name === masterTrack.name) {
-                    return 'bg-green-600'
+                    return 'text-green-500'
                 } else {
-                    return 'bg-red-600'
+                    return 'text-red-500'
                 }
             // check if any of the artists match, if more than 1 artist, check if all match, if only 1 artist out of multiple match, return yellow
             case 'artist':
@@ -133,6 +135,19 @@
         }
     }
 
+    const getLyrics = async (track) => {
+        const response = await fetch(``)
+        const data = await response.json()
+        console.log(data)
+        return data
+    }
+
+    const getClue = () => {
+        // randomly choose number between 1 and 3
+        const random = Math.floor(Math.random() * 3) + 1
+
+    }
+
 </script>
 
 <Portal>
@@ -140,17 +155,52 @@
         <Modal handleClose={closeModal}>
             <Modal.Content slot="content">
                 <Card>
-                    <Card.Header slot="header">Modal</Card.Header>
-                    <Card.Content slot="content">I am the content</Card.Content>
+                    <Card.Header slot="header">Congratulations!</Card.Header>
+                    <Card.Content slot="content">
+                        <div>
+                            <Button type="primary">Play again?</Button>
+                        </div>
+                    </Card.Content>
                 </Card>
             </Modal.Content>
         </Modal>
     {/if}
 </Portal>
 
+<div class="hidden lg:block absolute top-28 left-10 bg-gray-400 dark:bg-gray-800 items-center dark:text-white p-2 rounded-lg shadow-lg">
+    <div class="flex flex-col gap-4">
+        <div>
+            <p class="font-bold">Rules:</p>
+            <ul class="list-disc pl-5 text-sm font-semibold">
+                <li>Guess the song based on the results of your guesses</li>
+                <li>after 3 guesses, you will be offered a random clue</li>
+                <li>if you guess the song correctly, you win</li>
+            </ul>
+        </div>
+        <div>
+            <p class="font-bold">Legend:</p>
+            <ul class="list-disc pl-5 text-sm font-semibold">
+                <li class="text-green-500">Correct</li>
+                <li class="text-red-500">Incorrect</li>
+                <li class="text-yellow-500">Close/Contains</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
 <div class="flex items-center dark:text-white">
     <div class="relative px-6 pt-10 pb-8 sm:mx-auto sm:rounded-lg sm:px-10">
-        <div class="space-y-6 py-8 text-base leading-7 text-gray-600 ">
+        <div class="space-y-6 py-8 px-4 bg-gray-800 rounded-lg text-base leading-7 text-gray-600 shadow-lg">
+
+            {#if selected.length >= 3}
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-400">Do you need a clue?</h1>
+                    <div class="py-2">
+                        <Button type="primary" onClick={() => getClue()}>Yes</Button>
+                        <Button type="primary" onClick={() => getClue()}>No</Button>
+                    </div>
+                </div>
+            {/if}
 
             <form class="flex" on:submit|preventDefault={removeSelection(currentSelection)}>
                 <div class="relative flex">
@@ -205,77 +255,6 @@
             </form>
 
             <div>
-                <table class="sm:w-[100rem] hidden overflow-x-scroll">
-                    <thead>
-                    <tr>
-                        <th class="px-6 py-3 overflow-hidden border-b-2 border-gray-300 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
-                            Name
-                        </th>
-                        <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
-                            Artist/s
-                        </th>
-                        <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
-                            Album Name
-                        </th>
-                        <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
-                            Album Type
-                        </th>
-                        <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
-                            Release Month
-                        </th>
-                        <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
-                            Release Year
-                        </th>
-                    </thead>
-                    <tbody>
-                    {#each selected as track}
-                        <tr class="text-center">
-                            <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-500 {compareSong('name')}">
-                                <div>
-                                    <p class="text-sm truncate leading-5 font-medium text-gray-900 dark:text-white">
-                                        {track.name}
-                                    </p>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-500 {compareSong('artist')}">
-                                <div>
-                                    <div class="truncate text-sm leading-5 font-medium text-gray-900 dark:text-white">
-                                        <p class="truncate">{track.artists.map((artist) => artist.name).join(', ')}</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-500 {compareSong('album')}">
-                                <div>
-                                    <div class="text-sm leading-5 font-medium text-gray-900 dark:text-white">
-                                        {track.album.name}
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-500 {compareSong('albumType')}">
-                                <div>
-                                    <div class="text-sm leading-5 font-medium text-gray-900 dark:text-white">
-                                        {track.album.albumType}
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-500 {compareSong('month')}">
-                                <div>
-                                    <div class="text-sm leading-5 font-medium text-gray-900 dark:text-white">
-                                        {getMonth(track.releaseMonth)}
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-500 {compareSong('year')}">
-                                <div>
-                                    <div class="text-sm leading-5 font-medium text-gray-900 dark:text-white">
-                                        {track.releaseYear}
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                    {/each}
-                    </tbody>
-                </table>
 
                 <div class="sm:hidden">
                     <List>
@@ -301,32 +280,102 @@
                                         </div>
                                     </List.Item.Content.Title>
                                     <List.Item.Content.Description class="py-2" slot="description">
-                                            <div class="flex gap-2">
-                                                {#if track.artists.length <= 2}
-                                                    {#each track.artists as artist}
-                                                        <Badge class="{compareSong('artist')}">{artist.name}</Badge>
-                                                    {/each}
-                                                    <Badge class="{compareSong('month')}">{getMonth(track.releaseMonth)}</Badge>
-                                                    <Badge class="{compareSong('year')}">{track.releaseYear}</Badge>
-                                                {:else}
-                                                    {#each track.artists as artist, i}
-                                                        {#if i < 3}
-                                                            <Badge class="{compareSong('artist')} flex w-14 justify-center" >
-                                                                <p class="truncate">
-                                                                    {artist.name}
-                                                                </p>
-                                                            </Badge>
-                                                        {/if}
-                                                    {/each}
-                                                    <Badge class="{compareSong('artist')}" >{track.artists.length - 2} more</Badge>
-                                                {/if}
-                                            </div>
+                                        <div class="flex gap-2">
+                                            {#if track.artists.length <= 2}
+                                                {#each track.artists as artist}
+                                                    <Badge class="{compareSong('artist')}">{artist.name}</Badge>
+                                                {/each}
+                                                <Badge class="{compareSong('month')}">{getMonth(track.releaseMonth)}</Badge>
+                                                <Badge class="{compareSong('year')}">{track.releaseYear}</Badge>
+                                            {:else}
+                                                {#each track.artists as artist, i}
+                                                    {#if i < 3}
+                                                        <Badge class="{compareSong('artist')} flex w-14 justify-center">
+                                                            <p class="truncate">
+                                                                {artist.name}
+                                                            </p>
+                                                        </Badge>
+                                                    {/if}
+                                                {/each}
+                                                <Badge class="{compareSong('artist')}">{track.artists.length - 2}more
+                                                </Badge>
+                                            {/if}
+                                        </div>
 
                                     </List.Item.Content.Description>
                                 </List.Item.Content>
                             </List.Item>
                         {/each}
                     </List>
+                </div>
+
+
+                <div class="hidden sm:block">
+                    {#each selected as track}
+                        <div class="flex gap-2 py-2">
+                            <div class="flex justify-center">
+                                <div class="flex flex-col rounded-lg bg-gray-600 shadow-lg md:w-screen md:max-w-xl md:flex-row">
+                                    <img class="h-40 w-full rounded-t-lg object-cover md:h-36 md:w-36 md:rounded-none md:rounded-l-lg"
+                                         src={track.image} alt=""/>
+                                    <div class="flex flex-col justify-start px-6 pt-2">
+                                        <div class="flex gap-12 items-center">
+                                                <p
+                                                        use:tooltip={{
+                                                      placement: 'top',
+                                                      content: 'Track Name: ' + track.name,
+                                                      arrow: true,
+                                                      animation: 'scale'
+                                                   }}
+                                                        class="{compareSong('name')} text-xl font-medium w-[10.3rem] truncate">
+                                                    {stripName(track.name)}
+                                                </p>
+                                            <div class="flex gap-2 items-center">
+                                                <div
+                                                        use:tooltip={{
+                                                      placement: 'top',
+                                                      content: 'Album Name: ' + track.album.name,
+                                                      arrow: true,
+                                                      animation: 'scale'
+                                                   }}
+                                                >
+                                                    <Badge class="{compareSong('album')} flex w-28 justify-center dark:bg-opacity-100">
+                                                        <p class="truncate">
+                                                            {track.album.name}
+                                                        </p>
+                                                    </Badge>
+                                                </div>
+                                                <div
+                                                        use:tooltip={{
+                                                      placement: 'top',
+                                                      content: 'Album Type: ' + track.album.albumType,
+                                                      arrow: true,
+                                                      animation: 'scale'
+                                                   }}
+                                                >
+                                                    <Badge class="{compareSong('albumType')} capitalize dark:bg-opacity-100">{track.album.albumType}</Badge>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex flex-col pt-4 pr-10">
+                                            <div class="grid grid-cols-3 grid-rows-2 space-2">
+                                                {#each track.artists as artist}
+                                                    <div>
+                                                        <Badge class="{compareSong('artist')} dark:bg-opacity-100 truncate">{artist.name}</Badge>
+                                                    </div>
+                                                {/each}
+                                            </div>
+                                            <div class="flex gap-4 pt-2">
+                                                <p class="text-sm text-white font-bold">Released:</p>
+                                                <Badge class="{compareSong('month')} dark:bg-opacity-100">{getMonth(track.releaseMonth)}</Badge>
+                                                <Badge class="{compareSong('year')} dark:bg-opacity-100">{track.releaseYear}</Badge>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    {/each}
                 </div>
             </div>
         </div>
